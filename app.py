@@ -136,7 +136,7 @@ def update_data():
             time.sleep(0.02)
         
         # 插入剩余数据
-        if batch_
+        if batch_data:
             c.executemany('''
                 INSERT INTO top10_holders 
                 (stock_code, stock_name, holder_name, holder_rank, update_time)
