@@ -63,7 +63,8 @@ def update_data():
                 status_text.text(f"正在更新：{i+1}/{total} ({name})")
             time.sleep(0.05)
         
-        if batch_
+        # 这里是修正的地方！
+        if batch_data:
             c.executemany('INSERT INTO top10_holders VALUES (?,?,?,?,?)', batch_data)
             conn.commit()
             
@@ -100,7 +101,7 @@ conn = sqlite3.connect(DB_PATH)
 count = pd.read_sql_query("SELECT count(*) as c FROM top10_holders", conn)['c'][0]
 conn.close()
 
-# 侧边栏 - 始终显示
+# 侧边栏
 st.sidebar.header("📊 数据库状态")
 if count > 0:
     st.sidebar.success(f"✅ 已收录 {count:,} 条记录")
@@ -116,11 +117,10 @@ if st.sidebar.button("📥 更新/重新加载数据", use_container_width=True)
         time.sleep(1)
         st.rerun()
 
-# 主区域 - 始终显示搜索框
+# 主区域 - 搜索框
 st.markdown("### 🔍 股东检索")
 keywords = st.text_input("输入股东名字（多个用逗号分隔）", 
-                        placeholder="例：中央汇金，中国证券金融，高毅资产",
-                        help="支持模糊匹配，输入关键词即可")
+                        placeholder="例：中央汇金，中国证券金融，高毅资产")
 
 col1, col2 = st.columns([1, 5])
 with col1:
@@ -138,9 +138,8 @@ if search_btn:
             if count == 0:
                 st.error("❌ 数据库为空，请先在左侧点击"更新数据"按钮")
             else:
-                st.info(f"🔍 未找到包含 "{"、".join(kw_list)}" 的股票")
+                st.info(f"🔍 未找到匹配的股票")
         else:
-            # 聚合显示
             result = df.groupby(['stock_code', 'stock_name'])['holder_name'].apply(lambda x: ' | '.join(x)).reset_index()
             result['match_count'] = df.groupby(['stock_code', 'stock_name']).size().values
             result = result.sort_values('match_count', ascending=False)
@@ -148,7 +147,6 @@ if search_btn:
             st.success(f"✅ 找到 {len(result)} 只匹配股票")
             st.dataframe(result, use_container_width=True, hide_index=True)
             
-            # 导出按钮
             csv = result.to_csv(index=False).encode('utf-8-sig')
             st.download_button("📥 导出 CSV 文件", 
                              csv, 
@@ -156,7 +154,5 @@ if search_btn:
                              "text/csv",
                              use_container_width=True)
 
-# 页脚
 st.markdown("---")
-st.markdown("💡 **使用提示**：首次使用需点击左侧"更新数据"（约20分钟），之后即可快速检索")
-st.caption("数据来源：AKShare | 仅供学习研究使用")
+st.caption("数据来源：AKShare | 仅供学习研究")
