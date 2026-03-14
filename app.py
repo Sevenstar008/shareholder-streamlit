@@ -6,15 +6,12 @@ import os
 import time
 from datetime import datetime
 
-# 页面配置
 st.set_page_config(page_title="A 股股东检索系统", layout="wide")
 
-# 路径配置
 DB_FOLDER = "data"
 DB_PATH = os.path.join(DB_FOLDER, "shareholders.db")
 os.makedirs(DB_FOLDER, exist_ok=True)
 
-# 初始化数据库
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -26,7 +23,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-# 更新数据函数
 def update_data():
     progress_bar = st.progress(0)
     status_text = st.empty()
@@ -63,7 +59,6 @@ def update_data():
                 status_text.text(f"正在更新：{i+1}/{total} ({name})")
             time.sleep(0.05)
         
-        # 这里是修正的地方！
         if batch_data:
             c.executemany('INSERT INTO top10_holders VALUES (?,?,?,?,?)', batch_data)
             conn.commit()
@@ -75,7 +70,6 @@ def update_data():
         status_text.text(f"❌ 更新失败：{str(e)}")
         return False
 
-# 搜索函数
 def search_data(keywords):
     conn = sqlite3.connect(DB_PATH)
     conditions = []
@@ -93,15 +87,12 @@ def search_data(keywords):
 st.title("🗄️ A 股股东检索系统")
 st.markdown("免安装 · 打开即用 · 支持多股东匹配")
 
-# 初始化数据库
 init_db()
 
-# 检查数据库状态
 conn = sqlite3.connect(DB_PATH)
 count = pd.read_sql_query("SELECT count(*) as c FROM top10_holders", conn)['c'][0]
 conn.close()
 
-# 侧边栏
 st.sidebar.header("📊 数据库状态")
 if count > 0:
     st.sidebar.success(f"✅ 已收录 {count:,} 条记录")
@@ -117,7 +108,6 @@ if st.sidebar.button("📥 更新/重新加载数据", use_container_width=True)
         time.sleep(1)
         st.rerun()
 
-# 主区域 - 搜索框
 st.markdown("### 🔍 股东检索")
 keywords = st.text_input("输入股东名字（多个用逗号分隔）", 
                         placeholder="例：中央汇金，中国证券金融，高毅资产")
@@ -136,9 +126,9 @@ if search_btn:
         
         if df.empty:
             if count == 0:
-                st.error("❌ 数据库为空，请先在左侧点击"更新数据"按钮")
+                st.error("❌ 数据库为空，请先在左侧点击'更新数据'按钮")
             else:
-                st.info(f"🔍 未找到匹配的股票")
+                st.info("🔍 未找到匹配的股票")
         else:
             result = df.groupby(['stock_code', 'stock_name'])['holder_name'].apply(lambda x: ' | '.join(x)).reset_index()
             result['match_count'] = df.groupby(['stock_code', 'stock_name']).size().values
