@@ -36,7 +36,7 @@ def update_data():
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute('DELETE FROM top10_holders') # 清空旧数据
+        c.execute('DELETE FROM top10_holders')  # 清空旧数据
         conn.commit()
         
         stock_df = ak.stock_info_a_code_name()
@@ -53,6 +53,7 @@ def update_data():
                         if isinstance(holder, str):
                             batch_data.append((code, name, holder, rank, datetime.now().strftime('%Y-%m-%d')))
                 
+                # 批量插入
                 if len(batch_data) >= 50:
                     c.executemany('INSERT INTO top10_holders VALUES (?,?,?,?,?)', batch_data)
                     conn.commit()
@@ -62,9 +63,10 @@ def update_data():
             
             progress_bar.progress((i + 1) / total)
             status_text.text(f"正在更新：{i+1}/{total} ({name})")
-            time.sleep(0.1) # 控制速度
+            time.sleep(0.05)  # 加快速度
         
-        if batch_
+        # 插入剩余数据
+        if batch_data:
             c.executemany('INSERT INTO top10_holders VALUES (?,?,?,?,?)', batch_data)
             conn.commit()
             
